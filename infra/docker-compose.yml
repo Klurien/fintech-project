@@ -1,0 +1,133 @@
+version: '3.8'
+
+services:
+  # ==========================================
+  # Event Bus (Kafka & Zookeeper)
+  # ==========================================
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.3.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:7.3.0
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  # ==========================================
+  # Persistent Storage
+  # ==========================================
+  timescaledb:
+    image: timescale/timescaledb:latest-pg14
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: fintech_telemetry
+    ports:
+      - "5432:5432"
+    volumes:
+      - timescale-data:/var/lib/postgresql/data
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: password123
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+
+  # ==========================================
+  # Ingestion Simulators / Backends
+  # ==========================================
+  traccar:
+    image: traccar/traccar:latest
+    ports:
+      - "8082:8082"   # Web UI
+      - "5000-5150:5000-5150" # Device ports
+      - "5000-5150:5000-5150/udp"
+    # To run successfully, traccar needs traccar.xml in a bound volume. 
+    # For now, it will use its default in-memory H2 config unless overwritten.
+
+  dump1090:
+    image: mikenye/dump1090:latest
+    # Requires USB mapping `--device /dev/bus/usb` which is omitted for this general demo.
+    environment:
+      - LAT=40.7128
+      - LON=-74.0060
+    ports:
+      - "8080:8080"   # Lighttpd Web UI
+      - "30005:30005" # Raw beast format
+
+  # ==========================================
+  # Custom Kafka Adapters
+  # ==========================================
+  traccar-normalizer:
+    build: ../adapters/traccar-normalizer
+    environment:
+      KAFKA_BROKERS: kafka:29092
+      TOPIC_NORMALIZED: tracking_normalized
+      PORT: 3001
+    ports:
+      - "3001:3001"
+    depends_on:
+      - kafka
+
+  ais-normalizer:
+    build: ../adapters/ais-normalizer
+    environment:
+      KAFKA_BROKERS: kafka:29092
+      TOPIC_NORMALIZED: tracking_normalized
+      SIMULATOR_MODE: 'true'
+    depends_on:
+      - kafka
+
+  ccxt-adapter:
+    build: ../adapters/ccxt-market-adapter
+    environment:
+      KAFKA_BROKERS: kafka:29092
+      TOPIC_MARKET: market_ticks
+      CCXT_EXCHANGE: binance
+      CCXT_SYMBOLS: BTC/USDT,ETH/USDT,SOL/USDT
+      POLL_INTERVAL_MS: 2000
+    depends_on:
+      - kafka
+
+  adsb-adapter:
+    build: ../adapters/adsb-dump1090
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      SIMULATOR_MODE: 'true'
+    depends_on:
+      - kafka
+
+  timescale-sink:
+    build:
+      context: ..
+      dockerfile: adapters/timescale-sink-adapter/Dockerfile
+    environment:
+      KAFKA_BROKERS: kafka:29092
+      TOPIC_NORMALIZED: tracking_normalized
+      DATABASE_URL: "postgresql://postgres:password123@timescaledb:5432/fintech_telemetry"
+    depends_on:
+      - kafka
+      - timescaledb
+
+volumes:
+  timescale-data:
+  minio-data:

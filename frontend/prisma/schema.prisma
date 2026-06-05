@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Configured for TiDB via MySQL driver. 
+// Uses DATABASE_URL from .env
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Asset {
+  id           String       @id @default(uuid())
+  type         String       // truck, ship, aircraft
+  registration String
+  ownerId      String
+  metadata     Json?
+  tracks       TrackPoint[]
+  trips        Trip[]
+}
+
+model TrackPoint {
+  id          String   @id @default(uuid())
+  ts          DateTime
+  lat         Float
+  lon         Float
+  speed       Float?
+  heading     Float?
+  source      String   // ccxt, ais, telemetry, ads-b
+  rawPayload  Json?
+  
+  assetId     String?
+  asset       Asset?   @relation(fields: [assetId], references: [id])
+
+  @@index([ts])
+}
+
+model Trip {
+  id         String   @id @default(uuid())
+  startTs    DateTime
+  endTs      DateTime?
+  costCenter String?
+  tags       Json?
+
+  assetId    String
+  asset      Asset    @relation(fields: [assetId], references: [id])
+}
+
+model LedgerEntry {
+  id            String   @id @default(uuid())
+  ts            DateTime @default(now())
+  debitAccount  String
+  creditAccount String
+  amount        Decimal  @db.Decimal(19, 4)
+  currency      String
+  tags          Json?
+  sourceRef     String?
+  signatureHash String?  // For append-only audit verification
+}
+
+model Receipt {
+  id            String   @id @default(uuid())
+  imageUrl      String
+  ocrText       String?  @db.Text
+  total         Decimal? @db.Decimal(19, 4)
+  currency      String?
+  vendor        String?
+  date          DateTime?
+  linkedEntries Json?    // References to LedgerEntry IDs
+}

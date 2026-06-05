@@ -1,0 +1,13 @@
+{
+  "name": "ais-normalizer",
+  "version": "1.0.0",
+  "description": "WebSocket AIS stream → Kafka normalized TrackPoint adapter",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "kafkajs": "^2.2.4",
+    "ws": "^8.17.0"
+  }
+}

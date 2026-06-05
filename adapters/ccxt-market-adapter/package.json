@@ -1,0 +1,13 @@
+{
+  "name": "ccxt-market-adapter",
+  "version": "1.0.0",
+  "description": "CCXT live market ticks → Kafka market_ticks adapter",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "ccxt": "^4.3.44",
+    "kafkajs": "^2.2.4"
+  }
+}

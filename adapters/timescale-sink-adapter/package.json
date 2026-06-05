@@ -1,0 +1,16 @@
+{
+  "name": "timescale-sink-adapter",
+  "version": "1.0.0",
+  "description": "Kafka consumer that sinks tracking events into TimescaleDB via Prisma",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.14.0",
+    "kafkajs": "^2.2.4"
+  },
+  "devDependencies": {
+    "prisma": "^5.14.0"
+  }
+}
