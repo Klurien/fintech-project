@@ -1,180 +1,363 @@
-# 🛒 Duka Ledger — Financial Inclusion for the Informal Sector
+# VendorAssist 🛒
 
-> Empowering small-scale traders and informal vendors with simple, intuitive tools to track their cash flow — no accounting knowledge required.
-
----
-
-## 📌 Problem Statement
-
-Millions of small-scale traders and informal vendors across Africa and the Global South operate without formal financial tools. This makes it nearly impossible to answer the most basic business question: *"Am I making a profit?"*
-
-Manual bookkeeping is time-consuming, literacy barriers exist, and most accounting software is designed for formal businesses. **Duka Ledger** bridges this gap.
+> **Financial Inclusion for the Informal Sector** — A simple, powerful accounting tool built for small-scale traders and informal vendors.
 
 ---
 
-## 🎯 Challenge Goal
+## Table of Contents
 
-Build an **intuitive, accessible interface** that simplifies accounting for non-technical users in low-resource environments — enabling them to log sales, track expenses, and understand their financial health at a glance.
-
----
-
-## ✨ Key Features
-
-### 🎙️ 1. Voice-to-Ledger
-Log transactions hands-free using natural language voice commands.
-
-- Say *"Sold 2kg of tomatoes for 200 shillings"* and the app automatically parses and records the transaction.
-- Supports local languages and informal phrasing.
-- Powered by on-device speech recognition + AI intent parsing.
-- Ideal for busy vendors who can't stop to type.
-
-**Example commands:**
-```
-"Bought 10 litres of cooking oil for 1500 shillings"
-"Sold a bag of maize for 800 bob"
-"Paid 300 for transport"
-```
+- [Overview](#overview)
+- [Problem Statement](#problem-statement)
+- [Key Features](#key-features)
+- [Tech Stack](#tech-stack)
+- [Architecture](#architecture)
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+  - [Environment Variables](#environment-variables)
+  - [Running the App](#running-the-app)
+- [Project Structure](#project-structure)
+- [API Endpoints](#api-endpoints)
+- [Offline Resilience](#offline-resilience)
+- [Contributing](#contributing)
+- [License](#license)
 
 ---
 
-### 📷 2. Photo-to-Text Receipt Scanning
-Capture expenses instantly by photographing receipts — no manual typing needed.
+## Overview
 
-- Point your camera at any receipt or supplier invoice.
-- AI-powered OCR extracts vendor name, items, amounts, and date automatically.
-- Parsed data is previewed for quick confirmation before saving.
-- Works with handwritten receipts and printed slips.
+**VendorAssist** is a FinTech application designed to bring financial literacy and bookkeeping to informal sector vendors — market traders, roadside sellers, and small business owners — who have historically been excluded from formal financial tools. With voice-based transaction logging, AI-powered receipt scanning, and an intuitive visual dashboard, VendorAssist makes accounting accessible to everyone, regardless of their technical background.
 
 ---
 
-### 📊 3. Visual Financial Health Dashboard
-Understand your business performance through simple, beautiful visuals.
+## Problem Statement
 
-- **Daily Profit vs. Loss** bar chart — at-a-glance overview of each day.
-- **Weekly & Monthly Trends** — spot patterns over time.
-- **Top Expenses Breakdown** — pie chart showing where money is going.
-- **Running Balance** — always know your current position.
-- Designed with **low-literacy users** in mind: big numbers, color-coded indicators (green = profit, red = loss), and minimal jargon.
+Small-scale traders and informal vendors often lack formal tools to track their cash flow, making it difficult to know whether they are making a profit or a loss. Traditional accounting software is too complex, expensive, or requires reliable internet access — barriers that shut out millions of entrepreneurs at the grassroots level.
 
----
+VendorAssist solves this by providing:
 
-### 📶 4. Offline Resilience
-Built for areas with unreliable or no internet connectivity.
-
-- All core features (voice logging, receipt scanning, dashboard) work **fully offline**.
-- Data is stored locally on-device using an embedded database.
-- Automatic **background sync** when connectivity is restored.
-- Conflict resolution ensures no data is lost during sync.
-- Lightweight app size optimized for low-end Android devices.
+- A **zero-friction** interface that requires no accounting knowledge
+- **Voice-first** transaction logging in natural language
+- **Offline-first** architecture for low-connectivity areas
+- **Visual dashboards** that translate numbers into clear, actionable insights
 
 ---
 
-## 🏗️ Tech Stack
+## Key Features
+
+### 🎙️ Voice-to-Ledger
+Log transactions using natural language voice commands without typing a single character.
+
+- Example: *"Sold 2kg of tomatoes for 200 shillings"*
+- Supports local languages and conversational phrasing
+- Automatically categorizes transactions as income or expense
+- Confirms entries before saving to prevent errors
+
+### 📷 Photo-to-Text Receipt Scanning
+Snap a photo of any receipt and let AI extract the details automatically.
+
+- Powered by OCR and AI parsing via the Anthropic Claude API
+- Captures vendor name, items, amounts, and dates
+- Eliminates manual data entry for supplier purchases
+- Works with handwritten and printed receipts
+
+### 📊 Visual Financial Health Dashboard
+Understand your business at a glance through clean, simple charts.
+
+- Daily, weekly, and monthly profit vs. loss charts
+- Top-selling products and highest expense categories
+- Running cash balance tracker
+- Color-coded health indicators (green = profit, red = loss)
+- Plain-language summaries (e.g., *"You made a profit of KSh 450 today"*)
+
+### 📡 Offline Resilience
+Built to work in areas with limited or no internet connectivity.
+
+- All core features function fully offline using IndexedDB
+- Transactions queued locally and automatically synced when online
+- Sync status indicator visible at all times
+- Conflict resolution for any data discrepancies during sync
+
+---
+
+## Tech Stack
 
 | Layer | Technology |
 |---|---|
-| Mobile App | React Native / Flutter |
-| Voice Recognition | Web Speech API / Whisper (on-device) |
-| OCR / Receipt Parsing | Google ML Kit / Tesseract + Claude AI |
-| Local Storage | SQLite / Realm |
-| Backend & Sync | Node.js + PostgreSQL |
-| Auth | Phone number OTP (no email required) |
-| Charts | Victory Native / fl_chart |
+| Frontend | React 18 + TypeScript |
+| Backend | Node.js + Express.js |
+| Database | PostgreSQL |
+| ORM | Prisma |
+| AI / OCR | Anthropic Claude API |
+| Speech Recognition | Web Speech API / Whisper |
+| Offline Storage | IndexedDB (via Dexie.js) |
+| Auth | JWT + bcrypt |
+| Styling | Tailwind CSS |
+| Charts | Recharts |
+| Testing | Jest + React Testing Library |
 
 ---
 
-## 📁 Project Structure
+## Architecture
 
 ```
-duka-ledger/
-├── app/                    # Mobile application source
-│   ├── screens/            # UI screens (Dashboard, Ledger, Scan, etc.)
-│   ├── components/         # Reusable UI components
-│   ├── services/
-│   │   ├── voice/          # Voice recognition & NLP parsing
-│   │   ├── ocr/            # Receipt scanning & text extraction
-│   │   ├── sync/           # Offline sync logic
-│   │   └── storage/        # Local database layer
-│   └── utils/              # Helpers & formatters
-├── backend/                # API server
-│   ├── routes/             # REST API endpoints
-│   ├── models/             # Database models
-│   └── sync/               # Sync conflict resolution
-├── ai/                     # AI/NLP models & prompts
-│   ├── voice_parser/       # Transaction intent extraction
-│   └── receipt_parser/     # OCR post-processing
-├── docs/                   # Documentation & design assets
-└── README.md
+┌─────────────────────────────────────────────────────┐
+│                  VendorAssist Client                │
+│  ┌─────────────┐  ┌──────────────┐  ┌───────────┐  │
+│  │  Voice Input │  │ Receipt Scan │  │ Dashboard │  │
+│  └──────┬──────┘  └──────┬───────┘  └─────┬─────┘  │
+│         │                │                │         │
+│  ┌──────▼────────────────▼────────────────▼──────┐  │
+│  │           React + TypeScript (UI Layer)       │  │
+│  └──────────────────────┬────────────────────────┘  │
+│                         │                           │
+│  ┌──────────────────────▼────────────────────────┐  │
+│  │        IndexedDB (Offline Queue / Cache)      │  │
+│  └──────────────────────┬────────────────────────┘  │
+└─────────────────────────┼───────────────────────────┘
+                          │ HTTP / REST (when online)
+┌─────────────────────────▼───────────────────────────┐
+│                  Node.js + Express API              │
+│  ┌────────────┐  ┌──────────────┐  ┌─────────────┐  │
+│  │  Auth      │  │ Transactions │  │ AI/OCR      │  │
+│  │  Routes    │  │ Routes       │  │ Routes      │  │
+│  └─────┬──────┘  └──────┬───────┘  └──────┬──────┘  │
+│        │                │                 │          │
+│  ┌─────▼────────────────▼─────────────────▼──────┐  │
+│  │                 Prisma ORM                    │  │
+│  └──────────────────────┬────────────────────────┘  │
+│                         │                           │
+│  ┌──────────────────────▼────────────────────────┐  │
+│  │              PostgreSQL Database              │  │
+│  └───────────────────────────────────────────────┘  │
+│                                                     │
+│  ┌───────────────────────────────────────────────┐  │
+│  │            Anthropic Claude API               │  │
+│  │    (Receipt OCR + Voice NLP Processing)       │  │
+│  └───────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
-- Node.js v18+
-- React Native CLI or Flutter SDK
-- Android Studio (for emulator) or a physical Android device
-- PostgreSQL (for backend)
+
+Make sure you have the following installed:
+
+- [Node.js](https://nodejs.org/) v18 or higher
+- [npm](https://www.npmjs.com/) v9 or higher
+- [PostgreSQL](https://www.postgresql.org/) v14 or higher
+- An [Anthropic API key](https://console.anthropic.com/) for AI features
 
 ### Installation
 
-```bash
-# Clone the repository
-git clone https://github.com/your-org/duka-ledger.git
-cd duka-ledger
+1. **Clone the repository**
 
-# Install dependencies
+```bash
+git clone https://github.com/your-org/vendor-assist.git
+cd vendor-assist
+```
+
+2. **Install dependencies for both client and server**
+
+```bash
+# Install root dependencies
 npm install
 
-# Set up environment variables
-cp .env.example .env
-# Edit .env with your API keys and database URL
+# Install frontend dependencies
+cd client && npm install && cd ..
 
-# Start the backend
-cd backend && npm run dev
+# Install backend dependencies
+cd server && npm install && cd ..
+```
 
-# Run the mobile app
-cd app && npx react-native run-android
+3. **Set up the database**
+
+```bash
+# Create the PostgreSQL database
+createdb vendor_assist_db
+
+# Run Prisma migrations
+cd server
+npx prisma migrate dev --name init
+npx prisma generate
+```
+
+### Environment Variables
+
+Create a `.env` file inside the `/server` directory:
+
+```env
+# Server
+PORT=5000
+NODE_ENV=development
+
+# Database
+DATABASE_URL=postgresql://your_user:your_password@localhost:5432/vendor_assist_db
+
+# Auth
+JWT_SECRET=your_super_secret_jwt_key
+JWT_EXPIRES_IN=7d
+
+# Anthropic AI
+ANTHROPIC_API_KEY=sk-ant-your-api-key-here
+```
+
+Create a `.env` file inside the `/client` directory:
+
+```env
+REACT_APP_API_URL=http://localhost:5000/api
+```
+
+### Running the App
+
+**Development mode (run both simultaneously):**
+
+```bash
+# From the project root
+npm run dev
+```
+
+Or run separately:
+
+```bash
+# Terminal 1 — Backend
+cd server && npm run dev
+
+# Terminal 2 — Frontend
+cd client && npm start
+```
+
+The app will be available at:
+- Frontend: `http://localhost:3000`
+- Backend API: `http://localhost:5000`
+
+**Production build:**
+
+```bash
+# Build the frontend
+cd client && npm run build
+
+# Start the production server
+cd server && npm start
 ```
 
 ---
 
-## 🌍 Target Users
+## Project Structure
 
-- **Market vendors** — selling produce, goods, or food in open-air markets.
-- **Kiosk operators** — running small neighbourhood shops (dukas).
-- **Boda boda / transport operators** — tracking daily earnings and fuel costs.
-- **Artisans & service providers** — tailors, mechanics, salons tracking income and supplies.
+```
+vendor-assist/
+├── client/                     # React + TypeScript frontend
+│   ├── public/
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── Dashboard/      # Financial health charts
+│   │   │   ├── VoiceInput/     # Voice-to-ledger component
+│   │   │   ├── ReceiptScanner/ # Photo-to-text scanner
+│   │   │   ├── Ledger/         # Transaction list & history
+│   │   │   └── shared/         # Reusable UI components
+│   │   ├── hooks/              # Custom React hooks
+│   │   ├── services/
+│   │   │   ├── api.ts          # Axios API client
+│   │   │   └── offlineSync.ts  # IndexedDB sync service
+│   │   ├── store/              # State management (Context/Redux)
+│   │   ├── types/              # TypeScript interfaces
+│   │   └── utils/
+│   └── package.json
+│
+├── server/                     # Node.js + Express backend
+│   ├── src/
+│   │   ├── controllers/
+│   │   │   ├── auth.controller.ts
+│   │   │   ├── transactions.controller.ts
+│   │   │   └── ai.controller.ts
+│   │   ├── routes/
+│   │   ├── middleware/
+│   │   │   ├── auth.middleware.ts
+│   │   │   └── error.middleware.ts
+│   │   ├── services/
+│   │   │   ├── anthropic.service.ts  # Claude AI integration
+│   │   │   └── voice.service.ts      # Voice NLP parsing
+│   │   └── app.ts
+│   ├── prisma/
+│   │   ├── schema.prisma       # Database schema
+│   │   └── migrations/
+│   └── package.json
+│
+├── README.md
+└── package.json
+```
 
 ---
 
-## 🔐 Privacy & Data
+## API Endpoints
 
-- All transaction data is **stored locally first** and only synced with explicit user consent.
-- No personally identifiable financial data is shared with third parties.
-- Users own their data and can export or delete it at any time.
+### Authentication
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/auth/register` | Register a new vendor account |
+| POST | `/api/auth/login` | Login and receive JWT token |
+| POST | `/api/auth/refresh` | Refresh access token |
+
+### Transactions
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/transactions` | Get all transactions (paginated) |
+| POST | `/api/transactions` | Create a new transaction |
+| PUT | `/api/transactions/:id` | Update a transaction |
+| DELETE | `/api/transactions/:id` | Delete a transaction |
+| POST | `/api/transactions/bulk-sync` | Sync offline transactions |
+
+### AI Features
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/ai/parse-voice` | Parse voice command into a transaction |
+| POST | `/api/ai/scan-receipt` | Extract data from a receipt image |
+
+### Dashboard
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/dashboard/summary` | Get profit/loss summary |
+| GET | `/api/dashboard/chart-data` | Get time-series data for charts |
 
 ---
 
-## 🤝 Contributing
+## Offline Resilience
 
-We welcome contributions! Please read our [CONTRIBUTING.md](./docs/CONTRIBUTING.md) for guidelines on how to submit issues, propose features, or open pull requests.
+VendorAssist is built **offline-first**. Here is how it works:
 
----
-
-## 📄 License
-
-This project is licensed under the **MIT License** — see [LICENSE](./LICENSE) for details.
-
----
-
-## 💡 Inspiration
-
-> *"If you can't measure it, you can't improve it."*
-
-Most financial tools are built for people who already have money and know how to manage it. Duka Ledger is built for the people who are *building* their financial future — one sale at a time.
+1. **All transactions** are written to IndexedDB immediately, regardless of connectivity.
+2. A **background sync service** monitors network status using the `navigator.onLine` API.
+3. When connectivity is restored, pending transactions are automatically **flushed to the server**.
+4. The UI displays a **sync status badge** so users always know their data state:
+   - 🟢 Synced — All data is up to date
+   - 🟡 Pending — Changes waiting to sync
+   - 🔴 Offline — Working in offline mode
+5. **Conflict resolution** follows a "last-write-wins" strategy with server timestamp authority.
 
 ---
 
-*Built with ❤️ for the FinTech: Financial Inclusion Hackathon*
+## Contributing
+
+Contributions are welcome! Please follow these steps:
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/your-feature-name`
+3. Commit your changes: `git commit -m "feat: add your feature"`
+4. Push to the branch: `git push origin feature/your-feature-name`
+5. Open a Pull Request
+
+Please follow the [Conventional Commits](https://www.conventionalcommits.org/) standard for commit messages.
+
+---
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
+
+---
+
+> Built with ❤️ to empower informal sector vendors across Africa and beyond.
