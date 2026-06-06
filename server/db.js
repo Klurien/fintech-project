@@ -51,11 +51,23 @@ export async function initDb() {
     queueLimit: 0
   });
 
-  // 3. Create transactions table
+  // 3. Create tables and update schema
   try {
     const conn = await pool.getConnection();
     console.log('Database connected successfully. Checking schema...');
     
+    // Create users table
+    await conn.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id VARCHAR(36) PRIMARY KEY,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        password_hash VARCHAR(255) NULL,
+        auth_provider VARCHAR(50) DEFAULT 'local',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // Create transactions table
     const createTableQuery = `
       CREATE TABLE IF NOT EXISTS transactions (
         id VARCHAR(36) PRIMARY KEY,
@@ -71,7 +83,18 @@ export async function initDb() {
       );
     `;
     await conn.query(createTableQuery);
-    console.log('Schema verification complete: "transactions" table is ready.');
+
+    // Alter transactions table to add user_id if not exists
+    try {
+      await conn.query(`ALTER TABLE transactions ADD COLUMN user_id VARCHAR(36)`);
+      console.log('Added user_id column to transactions table locally.');
+    } catch (columnErr) {
+      if (columnErr.errno !== 1060 && columnErr.sqlState !== '42S21') {
+        console.error('Error adding user_id column locally:', columnErr);
+      }
+    }
+
+    console.log('Schema verification complete: tables are ready.');
     conn.release();
   } catch (error) {
     console.error('Database schema initialization failed:', error);

@@ -30,20 +30,31 @@ export async function forceSync(): Promise<boolean> {
   notifyListeners('syncing');
 
   try {
+    const token = localStorage.getItem('authToken');
+
     // 1. Process pending deletions first
     const pendingDeletions = await db.pending_deletions.toArray();
     for (const deletion of pendingDeletions) {
       try {
+        const headers: Record<string, string> = {};
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+
         const response = await fetch(`/api/transactions/${deletion.id}`, {
-          method: 'DELETE'
+          method: 'DELETE',
+          headers
         });
+        
+        if (response.status === 401) {
+          window.dispatchEvent(new Event('auth-expired'));
+          throw new Error('Session expired');
+        }
+
         // If success (200) or already deleted on server (404), remove from pending
         if (response.ok || response.status === 404) {
           await removePendingDeletion(deletion.id);
         }
       } catch (err) {
         console.error(`Failed to sync deletion for ID ${deletion.id}:`, err);
-        // Continue to sync other items, we will retry this deletion next time
       }
     }
 
@@ -54,19 +65,26 @@ export async function forceSync(): Promise<boolean> {
       .toArray();
 
     if (unsyncedTransactions.length === 0) {
-      // If we cleared deletions and have no new transactions, we are done
       notifyListeners('success', 'Database fully synchronized.');
       return true;
     }
 
     // 3. Post unsynced transactions to backend
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json'
+    };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
     const response = await fetch('/api/transactions/sync', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers,
       body: JSON.stringify(unsyncedTransactions)
     });
+
+    if (response.status === 401) {
+      window.dispatchEvent(new Event('auth-expired'));
+      throw new Error('Session expired');
+    }
 
     if (!response.ok) {
       throw new Error(`Server returned error: ${response.statusText}`);

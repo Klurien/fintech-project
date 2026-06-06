@@ -1,9 +1,10 @@
 import { query } from '../_db.js';
+import { verifyToken } from '../_auth.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
 
@@ -18,7 +19,17 @@ export default async function handler(req, res) {
   }
 
   try {
-    const result = await query('DELETE FROM transactions WHERE id = ?', [id]);
+    // Verify user
+    const authHeader = req.headers.authorization;
+    let userId;
+    try {
+      const decoded = await verifyToken(authHeader);
+      userId = decoded.userId;
+    } catch (authErr) {
+      return res.status(401).json({ error: 'Unauthorized: ' + authErr.message });
+    }
+
+    const result = await query('DELETE FROM transactions WHERE id = ? AND user_id = ?', [id, userId]);
 
     if (result.affectedRows === 0) {
       return res.status(404).json({ error: 'Transaction not found or already deleted' });

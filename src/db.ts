@@ -63,3 +63,14 @@ export async function removePendingDeletion(id: string) {
   await db.pending_deletions.delete(id);
 }
 
+export async function clearLocalTransactions() {
+  await db.transactions.clear();
+  await db.pending_deletions.clear();
+}
+
+export async function hasUnsyncedTransactions() {
+  const unsyncedCount = await db.transactions.where('synced').equals(0).count();
+  const pendingDeletionsCount = await db.pending_deletions.count();
+  return unsyncedCount > 0 || pendingDeletionsCount > 0;
+}
+
