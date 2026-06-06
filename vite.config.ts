@@ -10,9 +10,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
       manifest: {
-        name: 'Informal Merchant Ledger',
-        short_name: 'MerchantLedger',
-        description: 'Offline-resilient cash ledger and profit accounting for informal traders',
+        name: 'Vendor Assist',
+        short_name: 'VendorAssist',
+        description: 'Offline-first financial accounting app for informal traders. Log sales, scan receipts, and track profits.',
         theme_color: '#0a0c12',
         background_color: '#0a0c12',
         display: 'standalone',
