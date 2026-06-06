@@ -20,8 +20,13 @@ import {
   CheckCircle,
   CloudLightning,
   Filter,
-  Plus
+  Plus,
+  Sparkles,
+  Loader,
+  AlertTriangle,
+  Lightbulb
 } from 'lucide-react';
+import { getBusinessInsights, type BusinessInsight } from '../utils/gemini';
 
 interface DashboardProps {
   transactions: LocalTransaction[];
@@ -36,6 +41,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
 }) => {
   const [filterType, setFilterType] = useState<'all' | 'income' | 'expense'>('all');
   const [timeRange, setTimeRange] = useState<'7days' | '30days' | 'all'>('7days');
+  const [insights, setInsights] = useState<BusinessInsight | null>(null);
+  const [insightsLoading, setInsightsLoading] = useState<boolean>(false);
+  const [insightsError, setInsightsError] = useState<string>('');
 
   // 1. Calculate Summary Cards metrics
   const { totalIncome, totalExpense, netProfit } = useMemo(() => {
@@ -54,6 +62,28 @@ export const Dashboard: React.FC<DashboardProps> = ({
       netProfit: income - expense
     };
   }, [transactions]);
+
+  const fetchInsights = async () => {
+    if (transactions.length === 0) return;
+    setInsightsLoading(true);
+    setInsightsError('');
+    try {
+      const result = await getBusinessInsights(
+        transactions.map(t => ({
+          type: t.type,
+          amount: t.amount,
+          description: t.description,
+          category: t.category,
+          date: t.date
+        }))
+      );
+      setInsights(result);
+    } catch (err) {
+      setInsightsError('Could not load AI insights. Check your connection and try again.');
+    } finally {
+      setInsightsLoading(false);
+    }
+  };
 
   // 2. Filter transactions based on type and date ranges
   const filteredTransactions = useMemo(() => {
@@ -164,6 +194,84 @@ export const Dashboard: React.FC<DashboardProps> = ({
             {totalExpense.toLocaleString(undefined, { maximumFractionDigits: 2 })}
           </span>
         </div>
+      </div>
+
+      {/* AI Insights Panel */}
+      <div className="glass-panel" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Sparkles size={15} style={{ color: 'var(--text-secondary)' }} />
+            <span style={{ fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)' }}>AI Business Insights</span>
+          </div>
+          <button
+            onClick={fetchInsights}
+            disabled={insightsLoading || transactions.length === 0}
+            className="btn btn-secondary"
+            style={{ width: 'auto', padding: '0.4rem 0.875rem', fontSize: '0.8rem', height: '34px' }}
+          >
+            {insightsLoading ? <Loader size={13} style={{ animation: 'spin 1s linear infinite' }} /> : <Sparkles size={13} />}
+            {insightsLoading ? 'Analysing…' : insights ? 'Refresh' : 'Analyse'}
+          </button>
+        </div>
+
+        {insightsError && (
+          <div className="notification-banner error" style={{ margin: 0 }}>
+            <AlertTriangle size={14} />
+            <span>{insightsError}</span>
+          </div>
+        )}
+
+        {!insights && !insightsLoading && !insightsError && (
+          <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
+            {transactions.length === 0
+              ? 'Add some transactions first, then click Analyse for AI insights.'
+              : 'Click Analyse to get Gemini AI insights on your business performance.'}
+          </p>
+        )}
+
+        {insights && !insightsLoading && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+            {/* Trend + Summary */}
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', padding: '0.875rem', background: 'var(--grey-50)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)' }}>
+              <div style={{ flexShrink: 0, marginTop: '0.1rem' }}>
+                {insights.trend === 'positive'
+                  ? <TrendingUp size={18} style={{ color: 'var(--success)' }} />
+                  : insights.trend === 'negative'
+                  ? <TrendingDown size={18} style={{ color: 'var(--danger)' }} />
+                  : <DollarSign size={18} style={{ color: 'var(--text-muted)' }} />}
+              </div>
+              <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>{insights.summary}</p>
+            </div>
+
+            {/* Suggestion */}
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', padding: '0.875rem', background: '#f0fdf4', borderRadius: 'var(--radius-sm)', border: '1px solid var(--success-border)' }}>
+              <Lightbulb size={15} style={{ color: 'var(--success)', flexShrink: 0, marginTop: '0.15rem' }} />
+              <div>
+                <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--success)', marginBottom: '0.2rem' }}>Suggestion</div>
+                <p style={{ fontSize: '0.85rem', color: '#166534', lineHeight: '1.45' }}>{insights.suggestion}</p>
+              </div>
+            </div>
+
+            {/* Warning */}
+            {insights.warning && (
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', padding: '0.875rem', background: 'var(--warning-bg)', borderRadius: 'var(--radius-sm)', border: '1px solid #fde68a' }}>
+                <AlertTriangle size={15} style={{ color: 'var(--warning)', flexShrink: 0, marginTop: '0.15rem' }} />
+                <div>
+                  <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--warning)', marginBottom: '0.2rem' }}>Warning</div>
+                  <p style={{ fontSize: '0.85rem', color: '#92400e', lineHeight: '1.45' }}>{insights.warning}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Top expense category badge */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
+              <span>Top expense category:</span>
+              <span style={{ fontWeight: 600, color: 'var(--text-primary)', background: 'var(--grey-100)', padding: '0.2rem 0.6rem', borderRadius: '999px', fontSize: '0.75rem', textTransform: 'capitalize' }}>
+                {insights.topExpenseCategory}
+              </span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Responsive Content Grid */}
