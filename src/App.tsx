@@ -200,24 +200,14 @@ export default function App() {
 
   return (
     <div className="app-layout">
-      {/* SVG Gradients definitions for styling Lucide icons */}
-      <svg width="0" height="0" style={{ position: 'absolute' }}>
-        <defs>
-          <linearGradient id="primary-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="hsl(250, 89%, 65%)" />
-            <stop offset="100%" stopColor="hsl(290, 85%, 60%)" />
-          </linearGradient>
-        </defs>
-      </svg>
-
       {/* Desktop Sidebar Navigation */}
       <aside className="app-sidebar">
         <div className="sidebar-brand">
-          <TrendingUp size={24} style={{ stroke: 'url(#primary-grad)' }} />
+          <TrendingUp size={22} style={{ stroke: '#ffffff' }} />
           <span>Vendor Assist</span>
         </div>
 
-        <div className="sidebar-user-card glass-panel">
+        <div className="sidebar-user-card">
           {photoURL ? (
             <img src={photoURL} alt="Profile" className="user-avatar" />
           ) : (
@@ -279,7 +269,7 @@ export default function App() {
         {/* Header */}
         <header className="app-header">
           <div className="app-title-group">
-            <TrendingUp size={24} style={{ stroke: 'url(#primary-grad)' }} />
+            <TrendingUp size={20} style={{ stroke: '#1a1a1a' }} />
             <h1 className="app-logo">Vendor Assist</h1>
           </div>
           

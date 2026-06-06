@@ -87,18 +87,18 @@ export const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
 
   return (
     <div className="auth-wrapper">
-      <div className="glass-panel auth-card">
+      <div className="auth-card">
         {/* Brand header */}
         <div className="auth-brand">
           <div className="auth-logo-wrapper">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="url(#primary-grad)"/>
-              <path d="M2 17L12 22L22 17" stroke="url(#primary-grad)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M2 12L12 17L22 12" stroke="url(#primary-grad)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="#ffffff"/>
+              <path d="M2 17L12 22L22 17" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M2 12L12 17L22 12" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </div>
           <h2>Vendor Assist</h2>
-          <p>Merchant Cash Flow & Ledger Helper</p>
+          <p>Professional accounting for merchants</p>
         </div>
 
         {/* Navigation tabs */}
